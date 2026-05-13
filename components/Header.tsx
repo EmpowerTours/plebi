@@ -8,7 +8,7 @@ export function Header() {
           <Mark />
           <div className="leading-none">
             <div className="font-display tracking-tight text-2xl md:text-[26px]">
-              poll<span className="italic text-coral">y</span>
+              pleb<span className="italic text-coral">i</span>
             </div>
             <div className="eyebrow mt-1">quick polls, shared instantly</div>
           </div>
