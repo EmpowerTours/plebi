@@ -55,7 +55,7 @@ export default function Home() {
 
       <footer className="border-t hairline">
         <div className="mx-auto max-w-[1100px] px-5 md:px-8 py-8 flex flex-wrap items-center justify-between gap-3 text-sm text-mute">
-          <span>plebi · open source · MIT</span>
+          <span>plebi · © 2025 EmpowerTours SAS</span>
           <span className="font-mono">made simple</span>
         </div>
       </footer>

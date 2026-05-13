@@ -68,4 +68,4 @@ lib/
 
 ## License
 
-MIT
+Proprietary. © 2025 EmpowerTours SAS. See [LICENSE](./LICENSE) — no copy, modify, or distribute without written permission.

@@ -1,8 +1,8 @@
 {
   "name": "plebi",
   "version": "0.1.0",
-  "private": false,
-  "license": "MIT",
+  "private": true,
+  "license": "UNLICENSED",
   "scripts": {
     "dev": "next dev -p 3000",
     "build": "next build && cp -r public .next/standalone/ 2>/dev/null || true; cp -r .next/static .next/standalone/.next/ 2>/dev/null || true",
