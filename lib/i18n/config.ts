@@ -18,7 +18,7 @@ export const LOCALES = [
 
 export type Locale = (typeof LOCALES)[number];
 export const DEFAULT_LOCALE: Locale = "en";
-export const LOCALE_COOKIE = "NEXT_LOCALE";
+export const LOCALE_COOKIE = "plebi_locale";
 
 export const LOCALE_LABELS: Record<Locale, string> = {
   en: "English",
