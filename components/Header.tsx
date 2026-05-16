@@ -1,6 +1,9 @@
 import Link from "next/link";
+import { getDictionary } from "@/lib/i18n/server";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 
-export function Header() {
+export async function Header() {
+  const { locale, t } = await getDictionary();
   return (
     <header className="border-b hairline">
       <div className="mx-auto max-w-[1100px] px-5 md:px-8 py-5 flex items-center justify-between">
@@ -10,13 +13,17 @@ export function Header() {
             <div className="font-display tracking-tight text-2xl md:text-[26px]">
               pleb<span className="italic text-coral">i</span>
             </div>
-            <div className="eyebrow mt-1">quick polls, shared instantly</div>
+            <div className="eyebrow mt-1">{t.tagline}</div>
           </div>
         </Link>
         <nav className="hidden md:flex items-center gap-6 text-[14px] text-graphite">
-          <a href="#how" className="hover:text-ink">How it works</a>
-          <Link href="/" className="btn btn-ghost">All polls</Link>
+          <a href="#how" className="hover:text-ink">{t.nav.howItWorks}</a>
+          <Link href="/" className="btn btn-ghost">{t.nav.allPolls}</Link>
+          <LanguageSwitcher current={locale} label={t.nav.language} />
         </nav>
+        <div className="md:hidden">
+          <LanguageSwitcher current={locale} label={t.nav.language} />
+        </div>
       </div>
     </header>
   );

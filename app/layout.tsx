@@ -1,15 +1,22 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { getDictionary } from "@/lib/i18n/server";
+import { I18nProvider } from "@/lib/i18n/I18nProvider";
+import { RTL_LOCALES } from "@/lib/i18n/config";
 
-export const metadata: Metadata = {
-  title: "Plebi — quick polls, shared instantly",
-  description:
-    "Create a poll in seconds. Share a link. Watch results come in live.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getDictionary();
+  return {
+    title: t.meta.title,
+    description: t.meta.description,
+  };
+}
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const { locale } = await getDictionary();
+  const dir = RTL_LOCALES.has(locale) ? "rtl" : "ltr";
   return (
-    <html lang="en">
+    <html lang={locale} dir={dir}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -19,7 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="font-body min-h-dvh">
-        {children}
+        <I18nProvider locale={locale}>{children}</I18nProvider>
       </body>
     </html>
   );

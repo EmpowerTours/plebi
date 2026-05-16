@@ -5,6 +5,7 @@ import { getVoterId } from "@/lib/voterId";
 import { timeLeft } from "@/lib/timeLeft";
 import type { Poll } from "@/lib/types";
 import { ShareBar } from "./ShareBar";
+import { useT } from "@/lib/i18n/I18nProvider";
 
 type Props = {
   initialPoll: Poll;
@@ -12,6 +13,7 @@ type Props = {
 };
 
 export function PollVoter({ initialPoll, shareUrl }: Props) {
+  const t = useT();
   const [poll, setPoll] = useState<Poll>(initialPoll);
   const [yourVote, setYourVote] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState<number | null>(null);
@@ -19,11 +21,10 @@ export function PollVoter({ initialPoll, shareUrl }: Props) {
   const [tick, setTick] = useState(0); // re-render for countdown
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const t = timeLeft(poll.ends_at);
-  const closed = t.closed;
+  const ti = timeLeft(poll.ends_at, t.time);
+  const closed = ti.closed;
   const showResults = closed || yourVote !== null;
 
-  // Fetch existing vote on mount + load latest poll
   useEffect(() => {
     const id = getVoterId();
     fetch(`/api/polls/${poll.id}?voterId=${encodeURIComponent(id)}`)
@@ -35,13 +36,11 @@ export function PollVoter({ initialPoll, shareUrl }: Props) {
       .catch(() => {});
   }, [poll.id]);
 
-  // Countdown re-render every 5s
   useEffect(() => {
     const id = setInterval(() => setTick((v) => v + 1), 5000);
     return () => clearInterval(id);
   }, []);
 
-  // Poll for fresh results while showing results
   useEffect(() => {
     if (!showResults) return;
     pollingRef.current = setInterval(() => {
@@ -71,19 +70,18 @@ export function PollVoter({ initialPoll, shareUrl }: Props) {
       const json = await res.json();
       if (!res.ok) {
         if (json.error === "already_voted") {
-          // Sync state and fall through to results
           const r2 = await fetch(`/api/polls/${poll.id}?voterId=${encodeURIComponent(voterId)}`);
           const d2 = await r2.json();
           if (d2.poll) setPoll(d2.poll);
           if (typeof d2.yourVote === "number") setYourVote(d2.yourVote);
           return;
         }
-        throw new Error(humanError(json.error));
+        throw new Error(humanError(json.error, t));
       }
       if (json.poll) setPoll(json.poll);
       if (typeof json.yourVote === "number") setYourVote(json.yourVote);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      setError(err instanceof Error ? err.message : t.voter.somethingWrong);
     } finally {
       setSubmitting(null);
     }
@@ -108,13 +106,14 @@ export function PollVoter({ initialPoll, shareUrl }: Props) {
       <div className="flex items-center gap-2 flex-wrap mb-4">
         <span className={`tag ${closed ? "tag-closed" : "tag-live"}`}>
           {!closed && <span className="dot dot-live" />}
-          {/* re-evaluate label using tick */}
-          {(() => { void tick; return timeLeft(poll.ends_at).label; })()}
+          {(() => { void tick; return timeLeft(poll.ends_at, t.time).label; })()}
         </span>
         <span className="tag">
-          {totalVotes} {totalVotes === 1 ? "vote" : "votes"}
+          {totalVotes} {totalVotes === 1 ? t.voter.voteSingular : t.voter.votePlural}
         </span>
-        {yourVote !== null && !closed && <span className="tag">your vote · #{yourVote + 1}</span>}
+        {yourVote !== null && !closed && (
+          <span className="tag">{t.voter.yourVote} · #{yourVote + 1}</span>
+        )}
       </div>
 
       <h1 className="font-display text-3xl md:text-5xl tracking-tightest leading-[1.05] mb-6">
@@ -141,7 +140,9 @@ export function PollVoter({ initialPoll, shareUrl }: Props) {
                     <span className="font-display text-graphite osnums w-7 shrink-0">#{i + 1}</span>
                     <span className="truncate text-[15px] md:text-base">{opt}</span>
                     {isYours && (
-                      <span className="ml-2 text-[11px] uppercase tracking-[0.18em] text-coralDeep">your pick</span>
+                      <span className="ml-2 text-[11px] uppercase tracking-[0.18em] text-coralDeep">
+                        {t.voter.yourPick}
+                      </span>
                     )}
                   </div>
                   <div className="flex items-baseline gap-2 shrink-0">
@@ -165,7 +166,7 @@ export function PollVoter({ initialPoll, shareUrl }: Props) {
                 <span className="truncate">{opt}</span>
               </span>
               <span className="text-mute text-sm">
-                {submitting === i ? "Voting…" : "Vote →"}
+                {submitting === i ? t.voter.voting : t.voter.vote}
               </span>
             </button>
           );
@@ -183,15 +184,15 @@ export function PollVoter({ initialPoll, shareUrl }: Props) {
   );
 }
 
-function humanError(code: string | undefined) {
+function humanError(code: string | undefined, t: ReturnType<typeof useT>) {
   switch (code) {
     case "not_found":
-      return "This poll no longer exists.";
+      return t.voter.notFound;
     case "ended":
-      return "This poll has ended.";
+      return t.voter.ended;
     case "bad_option":
-      return "That option is not valid.";
+      return t.voter.badOption;
     default:
-      return code ?? "Something went wrong";
+      return code ?? t.voter.somethingWrong;
   }
 }
