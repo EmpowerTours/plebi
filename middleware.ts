@@ -64,22 +64,39 @@ function isPrivateOrLocal(ip: string): boolean {
   );
 }
 
-async function fromIpGeo(ip: string): Promise<Locale | null> {
+async function tryGeo(url: string, pick: (j: unknown) => string | undefined): Promise<Locale | null> {
   try {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), GEO_TIMEOUT_MS);
-    const res = await fetch(`https://ipwho.is/${encodeURIComponent(ip)}?fields=country_code,success`, {
+    const res = await fetch(url, {
       signal: ctrl.signal,
-      headers: { "user-agent": "plebi/1.0" },
+      headers: { "user-agent": "plebi/1.0", accept: "application/json" },
     });
     clearTimeout(timer);
     if (!res.ok) return null;
-    const data = (await res.json()) as { country_code?: string; success?: boolean };
-    if (!data.success || !data.country_code) return null;
-    return COUNTRY_TO_LOCALE[data.country_code.toUpperCase()] ?? null;
+    const data = await res.json();
+    const cc = pick(data)?.trim().toUpperCase();
+    if (!cc) return null;
+    return COUNTRY_TO_LOCALE[cc] ?? null;
   } catch {
     return null;
   }
+}
+
+async function fromIpGeo(ip: string): Promise<Locale | null> {
+  const ipwho = await tryGeo(
+    `https://ipwho.is/${encodeURIComponent(ip)}?fields=country_code,success`,
+    (j) => {
+      const d = j as { country_code?: string; success?: boolean };
+      return d.success ? d.country_code : undefined;
+    },
+  );
+  if (ipwho) return ipwho;
+
+  return tryGeo(
+    `https://ipapi.co/${encodeURIComponent(ip)}/json/`,
+    (j) => (j as { country_code?: string }).country_code,
+  );
 }
 
 export async function middleware(req: NextRequest) {
